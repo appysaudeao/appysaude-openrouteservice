@@ -4,7 +4,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 # hadolint ignore=DL3002
 USER root
-
+EXPOSE 8082
 WORKDIR /tmp/ors
 
 COPY ors-api/pom.xml /tmp/ors/ors-api/pom.xml
@@ -34,7 +34,7 @@ FROM docker.io/amazoncorretto:21.0.6-alpine3.21 AS publish
 # Build ARGS
 ARG UID=1000
 ARG GID=1000
-ARG OSM_FILE=./ors-api/src/test/files/heidelberg.test.pbf
+ARG OSM_FILE=./ors-docker/files/angola-latest.osm.pbf
 ARG ORS_HOME=/home/ors
 
 # Set the default language
@@ -51,7 +51,7 @@ RUN apk update && apk add --no-cache bash=~5 jq=~1 openssl=~3 && \
 
 # Copy over the needed bits and pieces from the other stages.
 COPY --chown=ors:ors --from=build /tmp/ors/ors-api/target/ors.jar /ors.jar
-COPY --chown=ors:ors ./$OSM_FILE /heidelberg.test.pbf
+COPY --chown=ors:ors ./$OSM_FILE /angola-latest.osm.pbf
 COPY --chown=ors:ors ./docker-entrypoint.sh /entrypoint.sh
 COPY --chown=ors:ors --from=build-go /go/bin/yq /bin/yq
 
@@ -61,9 +61,9 @@ COPY --chown=ors:ors ./ors-config.env /example-ors-config.env
 
 # Rewrite the example config to use the right files in the container
 RUN yq -i -p=props -o=props \
-    '.ors.engine.profile_default.build.source_file="/home/ors/files/example-heidelberg.test.pbf"' \
+    '.ors.engine.profile_default.build.source_file="/home/ors/files/angola-latest.osm.pbf"' \
     /example-ors-config.env && \
-    yq -i e '.ors.engine.profile_default.build.source_file = "/home/ors/files/example-heidelberg.test.pbf"' \
+    yq -i e '.ors.engine.profile_default.build.source_file = "/home/ors/files/angola-latest.osm.pbf"' \
     /example-ors-config.yml
 
 ENV BUILD_GRAPHS="False"
